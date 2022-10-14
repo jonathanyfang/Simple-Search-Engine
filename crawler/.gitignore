@@ -1,6 +1,5 @@
 crawler
 *.o
 test/
-test2/
-test3/
+test_output/
 core

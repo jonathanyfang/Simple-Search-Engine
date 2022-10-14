@@ -7,11 +7,26 @@
 #include "../common/pagedir.h"
 #include "../libcs50/webpage.h"
 
-const int HT_SIZE = 100;
+/* 
+* crawler.c
+* 
+* The crawler crawls a website and retrieves webpages starting with a specified URL. It parses the initial webpage, extracts
+* any embedded URLs and retrieves those pages, and crawls the pages found at those URLs, but limiting itself to some threshold number 
+* of hops from the seed URL (the ‘depth’), and avoiding visiting any given URL more than once. It saves the pages, and the URL and 
+* depth for each, in files. When the crawler process is complete, the indexing of the collected documents can begin.
+* 
+* Jonathan Fang
+* CS50, Fall 2022
+*/
 
-void crawler(char* seedURL, char* pageDirectory, int maxDepth);
-void pageScan(webpage_t *page, hashtable_t *ht, bag_t *bag);
-int parseArgs(int argc, char* argv[]);
+// Uncomment the line below to run the logr functions 
+// #define APPTEST 1
+const int HT_SIZE = 50;
+
+static void crawler(char* seedURL, char* pageDirectory, int maxDepth);
+static void pageScan(webpage_t *page, hashtable_t *ht, bag_t *bag);
+static int parseArgs(int argc, char* argv[]);
+static void logr(const char *word, const int depth, const char *url);
 
 int main(int argc, char* argv[]) {
     // convert maxDepth from char* to int
@@ -32,27 +47,20 @@ int main(int argc, char* argv[]) {
 * exit 6: validate new hashtable
 * exit 7: validate new bag
 */ 
-int parseArgs(int argc, char* argv[]) {
+static int parseArgs(int argc, char* argv[]) {
     if (argc != 4) {
         fprintf(stderr, "Usage: ./crawler seedURL pageDirectory maxDepth\n");
         exit(1);
     }
     // if the seed URL isn't internal, no need to crawl
     char *seedURL = argv[1];
-    if (normalizeURL(seedURL) == NULL) {
-        fprintf(stderr, "This url can't be normalized\n");
-        exit(2);
-    }
-    else{
-        if (!isInternalURL(seedURL)) {
+    if (!isInternalURL(seedURL)) {
             fprintf(stderr, "This url isn't internal\n");
             exit(2);
         }
-    }
     // call pagedir_init()
     char* pageDirectory = argv[2];
     if (!pagedir_init(pageDirectory)) {
-        fprintf(stderr, "This directory isn't writable or doesn't exist\n");
         exit(3);
     }
     char test;
@@ -68,7 +76,7 @@ int parseArgs(int argc, char* argv[]) {
 
 
 /* uses a bag to track pages to explore, and hashtable to track pages seen; when it explores a page */
-void crawler(char* seedURL, char* pageDirectory, int maxDepth) {
+static void crawler(char* seedURL, char* pageDirectory, int maxDepth) {
     // make a webpage for the seedURL, marked with depth=0
     webpage_t* page;
     char* seedcopy = malloc(strlen(seedURL) + 1);
@@ -76,6 +84,7 @@ void crawler(char* seedURL, char* pageDirectory, int maxDepth) {
     page = webpage_new(seedcopy, 0, NULL);
     if (page == NULL) {
         fprintf(stderr, "error allocating webpage\n");
+        free(seedcopy);
         exit(5);
     }
     // initialize the hashtable and add the seedURL
@@ -98,6 +107,7 @@ void crawler(char* seedURL, char* pageDirectory, int maxDepth) {
     while ((page = bag_extract(pages_to_crawl)) != NULL) {
         // fetch the HTML for that webpage
         if (webpage_fetch(page)) {
+            logr("Fetched", webpage_getDepth(page), webpage_getURL(page));
             // if fetch was successful, save the webpage to pageDirectory
             pagedir_save(page, id, pageDirectory);
             id++;
@@ -119,7 +129,9 @@ void crawler(char* seedURL, char* pageDirectory, int maxDepth) {
 /* Given a webpage, scan the given page to extract any links (URLs), ignoring non-internal URLs; 
 for any URL not already seen before (i.e., not in the hashtable), add the URL to both the hashtable pages_seen 
 and to the bag pages_to_crawl */
-void pageScan(webpage_t *page, hashtable_t *pages_seen, bag_t *pages_to_crawl) {
+static void pageScan(webpage_t *page, hashtable_t *pages_seen, bag_t *pages_to_crawl) {
+    int depth = webpage_getDepth(page) + 1;
+    logr("Scanning", webpage_getDepth(page), webpage_getURL(page));
     char* result;
     // initial position
     int pos = 0; 
@@ -127,17 +139,34 @@ void pageScan(webpage_t *page, hashtable_t *pages_seen, bag_t *pages_to_crawl) {
     while ((result = webpage_getNextURL(page, &pos)) != NULL) {
             // if that URL is not ‘internal’
         if(isInternalURL(result)) {
+            logr("Found", depth, result);
             // if hashtable_insert is true, means that the page has not been inserted into pages_seen or pages_to_crawl
             if (hashtable_insert(pages_seen, result, "")) {
+                logr("Added", depth, result);
                 // copy string, so the url in hashtable doesn't point to the url in newPage
                 webpage_t *newPage = webpage_new(result, webpage_getDepth(page) + 1, NULL);
                 bag_insert(pages_to_crawl, newPage);
             }
+            else{
+                logr("IgnDupl", depth, result);
+                free(result);
+            }
         }
         // If we do not create a new webpage, we must clean up the string here, as it won't be deleted by webpage_delete
         else {
-            free(result);
+            logr("IgnExtrn", depth, result);
             fprintf(stderr, "url %s is not internal\n", result);
+            free(result);
         }
     }
+}
+
+// log one word (1-9 chars) about a given url                                   
+static void logr(const char *word, const int depth, const char *url)
+{
+#ifdef APPTEST
+  printf("%2d %*s%9s: %s\n", depth, depth, "", word, url);
+#else
+  ;
+#endif
 }

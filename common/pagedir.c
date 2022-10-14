@@ -25,8 +25,8 @@ bool pagedir_init(char *pageDirectory) {
     // test if the file can be written into
 	if ((fp = fopen(filename, "w")) == NULL) {
         // directory doesn't exist
+        fprintf(stderr, "%s cannot be written, directory DNE or is not writable\n", filename);
         free(filename);
-        fprintf(stderr, "%s cannot be written, directory DNE or is not writable", filename);
         return false;
 	}
 	else { 

@@ -1,0 +1,123 @@
+gcc -Wall -pedantic -std=c11 -ggdb  -I../lib   -c -o crawler.o crawler.c
+gcc -Wall -pedantic -std=c11 -ggdb  -I../lib crawler.o ../libcs50/libcs50.a ../common/common.a ../libcs50/libcs50.a ../common/common.a -o crawler
+bash -v testing.sh
+module () {  _module_raw "$@" 2>&1
+}
+ml () {  module ml "$@"
+}
+_module_raw () {  eval `/usr/bin/tclsh8.6 /usr/lib/x86_64-linux-gnu/modulecmd.tcl bash "$@"`;
+ _mlstatus=$?;
+ return $_mlstatus
+}
+# Testing script for crawler.c
+# Author: Jonathan Fang
+# Date: Oct 2022
+#
+# usage: bash -v testing.sh
+
+# Define variables
+seedURL="http://cs50tse.cs.dartmouth.edu/tse/letters/"
+seedURL2="http://cs50tse.cs.dartmouth.edu/tse/wikipedia/"
+externalURL="www.google.com"
+testDir="./test_output"
+t="test"
+
+if ! [[ -d "$t" ]]; then
+  mkdir "$t"
+fi
+
+if ! [[ -d "$testDir" ]]; then
+  mkdir "$testDir"
+fi
+
+lettersDir="./test_output/letters"
+wikipediaDir="./test_output/wikipedia"
+toscrapeDir="./test_output/toscrape"
+
+if ! [[ -d "$lettersDir" ]]; then
+  mkdir "$lettersDir"
+fi
+
+if ! [[ -d "$wikipediaDir" ]]; then
+  mkdir "$wikipediaDir"
+fi
+
+if ! [[ -d "$toscrapeDir" ]]; then
+  mkdir "$toscrapeDir"
+fi
+
+
+#####################################
+### These tests should fail ###
+
+# 1 argument
+./crawler
+Usage: ./crawler seedURL pageDirectory maxDepth
+
+# 2 arguments
+./crawler $seedURL
+Usage: ./crawler seedURL pageDirectory maxDepth
+
+# 3 arguments
+./crawler $seedURL $t
+Usage: ./crawler seedURL pageDirectory maxDepth
+
+# 4 arguments + externalURL
+./crawler $externalURL $t 2
+This url isn't internal
+
+# 4 arguments, negative depth
+./crawler $seedURL $t -1
+maxDepth must be an integer in the range [0... 10] 
+
+# 4 arguments, greater than max depth
+./crawler $seedURL $t 11
+maxDepth must be an integer in the range [0... 10] 
+
+# Directory does not exist
+./crawler $seedURL dne 2
+dne/.crawler cannot be written, directory DNE or is not writable
+
+######################################
+### These tests should pass ####
+
+for depth in {0..5}; do
+  if ! [[ -d "${lettersDir}/depth${depth}" ]]; then 
+      mkdir "${lettersDir}/depth${depth}"   
+  fi
+  ./crawler http://cs50tse.cs.dartmouth.edu/tse/letters/ ${lettersDir}/depth${depth} $depth
+done
+Crawler crawled sucessfully
+Crawler crawled sucessfully
+url https://en.wikipedia.org/wiki/Algorithm is not internal
+Crawler crawled sucessfully
+url https://en.wikipedia.org/wiki/Algorithm is not internal
+url https://en.wikipedia.org/wiki/Breadth-first_search is not internal
+Crawler crawled sucessfully
+url https://en.wikipedia.org/wiki/Algorithm is not internal
+url https://en.wikipedia.org/wiki/Breadth-first_search is not internal
+url https://en.wikipedia.org/wiki/ENIAC is not internal
+url https://en.wikipedia.org/wiki/Depth-first_search is not internal
+url https://en.wikipedia.org/wiki/Computational_biology is not internal
+Crawler crawled sucessfully
+url https://en.wikipedia.org/wiki/Algorithm is not internal
+url https://en.wikipedia.org/wiki/Breadth-first_search is not internal
+url https://en.wikipedia.org/wiki/ENIAC is not internal
+url https://en.wikipedia.org/wiki/Graph_traversal is not internal
+url https://en.wikipedia.org/wiki/Fast_Fourier_transform is not internal
+url https://en.wikipedia.org/wiki/Depth-first_search is not internal
+url https://en.wikipedia.org/wiki/Computational_biology is not internal
+Crawler crawled sucessfully
+
+for depth in {0..1}; do
+  if ! [[ -d "${wikipediaDir}/depth${depth}" ]]; then 
+      mkdir "${wikipediaDir}/depth${depth}"   
+  fi
+  ./crawler http://cs50tse.cs.dartmouth.edu/tse/wikipedia/ ${wikipediaDir}/depth${depth} $depth
+done
+Crawler crawled sucessfully
+Crawler crawled sucessfully
+
+# Tests repeated links
+./crawler http://cs50tse.cs.dartmouth.edu/tse/toscrape/ ${toscrapeDir} 1
+Crawler crawled sucessfully
