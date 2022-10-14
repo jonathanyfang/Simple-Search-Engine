@@ -75,6 +75,25 @@ void crawler(char* seedURL, char* pageDirectory, int maxDepth) {
 /* Given a webpage, scan the given page to extract any links (URLs), ignoring non-internal URLs; 
 for any URL not already seen before (i.e., not in the hashtable), add the URL to both the hashtable pages_seen 
 and to the bag pages_to_crawl */
-void pageScan(webpage_t *page, hashtable_t *ht, bag_t *bag) {
-    
+void pageScan(webpage_t *page, hashtable_t *pages_seen, bag_t *pages_to_crawl) {
+    char* result;
+    // initial position
+    int pos = 0; 
+    // change value of pos during the while loop
+    while ((result = webpage_getNextURL(page, &pos)) != NULL) {
+            // if that URL is not ‘internal’
+        if(isInternalURL) {
+            // if hashtable_insert is true, means that the page has not been inserted into pages_seen or pages_to_crawl
+            if (hashtable_insert(pages_seen, result, "")) {
+                // copy string, so the url in hashtable doesn't point to the url in newPage
+                webpage_t *newPage = webpage_new(result, webpage_getDepth(page) + 1, NULL);
+                bag_insert(pages_to_crawl, newPage);
+            }
+        }
+        // If we do not create a new webpage, we must clean up the string here, as it won't be deleted by webpage_delete
+        else {
+            free(result);
+            fprintf(stderr, "url %s is not internal\n", result);
+        }
+    }
 }
