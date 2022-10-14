@@ -29,8 +29,8 @@ int main(int argc, char* argv[]) {
 * exit 3: directory exists, initialize it
 * exit 4: makes sure argv[3] maxDepth is an int and is nonnegative
 * exit 5: validate new webpage
-* exit 6: validate new bag
-* exit 7: validate new hashtable
+* exit 6: validate new hashtable
+* exit 7: validate new bag
 */ 
 int parseArgs(int argc, char* argv[]) {
     if (argc != 4) {
@@ -69,7 +69,51 @@ int parseArgs(int argc, char* argv[]) {
 
 /* uses a bag to track pages to explore, and hashtable to track pages seen; when it explores a page */
 void crawler(char* seedURL, char* pageDirectory, int maxDepth) {
+    // make a webpage for the seedURL, marked with depth=0
+    webpage_t* page;
+    char* seedcopy = malloc(strlen(seedURL) + 1);
+    strcpy(seedcopy, seedURL);
+    page = webpage_new(seedcopy, 0, NULL);
+    if (page == NULL) {
+        fprintf(stderr, "error allocating webpage\n");
+        exit(5);
+    }
+    // initialize the hashtable and add the seedURL
+    hashtable_t* pages_seen = hashtable_new(HT_SIZE);
+    if (pages_seen == NULL) {
+        fprintf(stderr, "error allocating hashtable\n");
+        exit(6);
+    }
+    hashtable_insert(pages_seen, seedURL, "");
     
+    // initialize the bag and add a webpage representing the seedURL at depth 0
+    bag_t* pages_to_crawl = bag_new();
+    if (pages_to_crawl == NULL) {
+        fprintf(stderr, "error allocating bag\n");
+        exit(7);
+    }
+    bag_insert(pages_to_crawl, page);
+    // while bag is not empty, pull a webpage from the bag
+    int id = 1;
+    while ((page = bag_extract(pages_to_crawl)) != NULL) {
+        // fetch the HTML for that webpage
+        if (webpage_fetch(page)) {
+            // if fetch was successful, save the webpage to pageDirectory
+            pagedir_save(page, id, pageDirectory);
+            id++;
+            // if the webpage is not at maxDepth,
+            if (webpage_getDepth(page) < maxDepth) {
+                // pageScan that HTML
+                pageScan(page, pages_seen, pages_to_crawl);
+            }
+        }
+        // delete that webpage
+        webpage_delete(page);
+    }
+    // delete the hashtable
+    hashtable_delete(pages_seen, NULL);
+    // delete the bag
+    bag_delete(pages_to_crawl, NULL);
 }
 
 /* Given a webpage, scan the given page to extract any links (URLs), ignoring non-internal URLs; 
