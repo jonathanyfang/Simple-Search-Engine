@@ -3,7 +3,7 @@
 * 
 * see pagedir.h for more info
 * 
-* Johnny Fang, October 2022
+* Jonathan Fang, October 2022
 */
 
 #include <stdio.h>
