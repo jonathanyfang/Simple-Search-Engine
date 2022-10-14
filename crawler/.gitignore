@@ -1,0 +1,6 @@
+crawler
+*.o
+test/
+test2/
+test3/
+core

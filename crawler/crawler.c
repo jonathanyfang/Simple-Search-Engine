@@ -58,7 +58,7 @@ int parseArgs(int argc, char* argv[]) {
     char test;
     int maxDepth;
     // for maxDepth, ensure it is an integer in specified range [0 ... 10]
-    if (!sscanf(argv[3], "%d%c", &maxDepth, &test) == 1 || maxDepth < 0 || maxDepth > 10) {
+    if ((!sscanf(argv[3], "%d%c", &maxDepth, &test)) == 1 || maxDepth < 0 || maxDepth > 10) {
         fprintf(stderr, "maxDepth must be an integer in the range [0... 10] \n");
         exit(4);
     }
@@ -126,7 +126,7 @@ void pageScan(webpage_t *page, hashtable_t *pages_seen, bag_t *pages_to_crawl) {
     // change value of pos during the while loop
     while ((result = webpage_getNextURL(page, &pos)) != NULL) {
             // if that URL is not ‘internal’
-        if(isInternalURL) {
+        if(isInternalURL(result)) {
             // if hashtable_insert is true, means that the page has not been inserted into pages_seen or pages_to_crawl
             if (hashtable_insert(pages_seen, result, "")) {
                 // copy string, so the url in hashtable doesn't point to the url in newPage
