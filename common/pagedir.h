@@ -19,4 +19,10 @@ bool pagedir_init(char *pageDirectory);
 // saves the webpage information into a file with a unique ID in the pageDirectory
 void pagedir_save(webpage_t *page, int id, char *pageDirectory);
 
+// checks if the directory is a crawler output
+bool pagedir_validate(char *pageDirectory);
+
+// loads a page from the crawler-produced directory
+webpage_t* pagedir_load(int ID, const char* dirname);
+
 #endif

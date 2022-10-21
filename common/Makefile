@@ -1,4 +1,4 @@
-OBJS = pagedir.o
+OBJS = pagedir.o word.o
 LIB = common.a
 
 # add -DNOSLEEP to disable the automatic sleep after web-page fetches
@@ -17,6 +17,7 @@ $(LIB): $(OBJS)
 
 # Dependencies: object files depend on header files
 pagedir.o: ../libcs50/mem.h ../libcs50/webpage.h
+word.o: word.h
 
 .PHONY: clean sourcelist
 
