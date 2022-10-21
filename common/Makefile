@@ -1,3 +1,8 @@
+# Makefile for the common directory
+#
+# Jonathan Fang
+# CS50, Fall 2022
+
 OBJS = pagedir.o word.o
 LIB = common.a
 
