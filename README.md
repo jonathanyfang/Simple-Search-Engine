@@ -1,11 +1,9 @@
-# CS50 TSE
-## Jonathan Fang (jonathanyfang)
+# CS50 TSE, Fall 2022
+## Jonathan Fang (github user: jonathanyfang)
 
-The assignment and Specs are in a [public repo](https://github.com/cs50-2022-fall/tse).
-Do not clone that repo; view it on GitHub.
-Watch there for any commits that may represent updates to the assignment or specs.
+Detailed descriptions of each part are included in the `README.md` and other md files in each subdirectory. 
 
-Assumed that any seedURL inputs for crawler were already normalized. The normalizeURL function provided caused a memory leak.
+Assumptions so far: Assumed that any seedURL inputs for crawler were already normalized. The normalizeURL function provided caused a memory leak.
 
 * [Lab 4 (crawler)](https://github.com/cs50-2022-fall/tse/tree/main/crawler)
 * [Lab 5 (indexer)](https://github.com/cs50-2022-fall/tse/tree/main/indexer)
