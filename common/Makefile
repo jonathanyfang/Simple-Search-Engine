@@ -3,7 +3,7 @@
 # Jonathan Fang
 # CS50, Fall 2022
 
-OBJS = pagedir.o word.o
+OBJS = pagedir.o word.o index.o
 LIB = common.a
 
 # add -DNOSLEEP to disable the automatic sleep after web-page fetches
@@ -21,8 +21,9 @@ $(LIB): $(OBJS)
 	ar cr $(LIB) $(OBJS)
 
 # Dependencies: object files depend on header files
-pagedir.o: ../libcs50/mem.h ../libcs50/webpage.h
+pagedir.o: pagedir.h  ../libcs50/mem.h ../libcs50/webpage.h
 word.o: word.h
+index.o: index.h 
 
 .PHONY: clean sourcelist
 

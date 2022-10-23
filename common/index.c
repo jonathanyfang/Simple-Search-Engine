@@ -13,10 +13,12 @@
 #include <stdbool.h>
 #include <string.h>
 #include "../common/pagedir.h"
+#include "../common/word.h"
 #include "../libcs50/hashtable.h"
 #include "../libcs50/set.h"
 #include "../libcs50/counters.h"
 #include "../libcs50/file.h"
+#include "../libcs50/webpage.h"
 
 const int ht_size = 500;
 static void hashtable_item_save(void* arg, const char* key, void* item);
@@ -81,6 +83,7 @@ bool index_set(index_t *index, const char* word, const int docID, const int coun
                 return false;
             }
             counters_set(ctrs, docID, count);
+            hashtable_insert(index->ht, word, ctrs);
         }
         return true;
     }
@@ -97,7 +100,7 @@ void index_save(index_t *index, const char* filename) {
     fclose(fp);
   }
   else {
-    fprintf(stderr, "%s could not be written into", filename);
+    fprintf(stderr, "%s could not be written into\n", filename);
     exit(0);
   }
 }
@@ -129,26 +132,45 @@ index_t* index_load(char *filename) {
     int size = file_numLines(fp);
     index_t *index = index_new(size);
     if (index == NULL) { // check that the index is allocated properly
-      fprintf(stderr, "error allocating to index");
+      fprintf(stderr, "error allocating to index\n");
       return NULL;
     }
     char* word;
-    int docID;
+    int ID;
     int count;
     // begin looping through the words, so the loop increments line by line
     while ((word = file_readWord(fp)) != NULL) {
       // begin scanning all the docID count pairs until none are left, this is based on the assumption that index_save works
-      while (fscanf(fp, "%d %d ", &docID, &count) == 2) {
+      while (fscanf(fp, "%d %d ", &ID, &count) == 2) {
         // set the value of the index
-        index_set(index, word, docID, count);
+        index_set(index, word, ID, count);
       }
       free(word);
     }
     fclose(fp);
     return index;
   }
-  fprintf(stderr, "File %s cannot be accessed", filename);
+  fprintf(stderr, "File %s cannot be accessed\n", filename);
   return NULL;
+}
+
+/**************** index_page() ****************/
+/* scans a webpage document to add its words to the index */
+void index_page(index_t *index, webpage_t *page,  char* pageDirectory, int ID) {
+  // loop through words in page
+      int pos = 0;
+      char* result;
+      while ((result = webpage_getNextWord(page, &pos)) != NULL) {
+        // word should be "significant"
+        if (strlen(result) >= 3) {
+          result = NormalizeWord(result);
+          index_insert(index, result, ID);
+          free(result);
+        }
+        else {
+          free(result);
+        }
+      }
 }
 
 /**************** index_build() ****************/
@@ -163,35 +185,30 @@ index_t* index_build(char* pageDirectory) {
   FILE *fp; 
   // Create a new index
   index_t* index = index_new(ht_size);
-	if ((fp = fopen(filename, "r")) != NULL) {
-    webpage_t *page;
-    if ((page = pagedir_load(ID, pageDirectory)) != NULL) {
-      indexPage(index, page, pageDirectory, ID);
-    }
-    else {
-      fprintf(stderr, "error loading page");
-    }  
-  }
-}
-
-
-/**************** index_page() ****************/
-/* scans a webpage document to add its words to the index */
-void indexPage(index_t *index, webpage_t *page,  char* pageDirectory, int ID) {
-  // loop through words in page
-      int pos = 0;
-      char* result;
-      while ((result = webpage_getNextWord(page, &pos)) != NULL) {
-        // word should be "significant"
-        if (strlen(result) >= 3) {
-          result = normalize_word(result);
-          index_insert(index, result, ID);
-          free(result);
-        }
-        else {
-          free(result);
-        }
+  if (index != NULL) {
+    while ((fp = fopen(filename, "r")) != NULL) { // will loop through files in the page directory, will update filename
+      webpage_t *page;
+      if ((page = pagedir_load(ID, pageDirectory)) != NULL) { // load crawler files into webpage data structures
+        index_page(index, page, pageDirectory, ID);
+        webpage_delete(page);
       }
+      else {
+        fprintf(stderr, "error loading page\n");
+        free(filename);
+        exit(1);
+      } 
+      fclose(fp);
+      ID++;
+      sprintf(filename, "%s/%d", pageDirectory, ID);
+    }
+    free(filename);
+    return index;
+  }
+  else {
+    fprintf(stderr, "error initializing index\n");
+    free(filename);
+    exit(1);
+  }
 }
 
 /**************** index_delete() ****************/

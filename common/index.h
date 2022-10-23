@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include "../libcs50/hashtable.h"
 #include "../libcs50/counters.h"
+#include "../libcs50/webpage.h"
 
 /* creates a new struct index_t */
 typedef struct index index_t;
@@ -38,11 +39,11 @@ void index_save(index_t *index, const char* filename);
 /* loads the index from another index-produced file */
 index_t* index_load(char *filename);
 
+/* scans a webpage document to add its words to the index */
+void index_page(index_t *index, webpage_t *page,  char* pageDirectory, int ID);
+
 /* builds an in-memory index from webpage files it finds in the pageDirectory */
 index_t* index_build(char* pageDirectory);
-
-/* scans a webpage document to add its words to the index */
-void indexPage(index_t *index, webpage_t *page,  char* pageDirectory, int ID);
 
 /* Deletes the index and frees memory */
 void index_delete(index_t *index);

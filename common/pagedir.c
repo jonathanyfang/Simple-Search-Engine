@@ -74,15 +74,14 @@ bool pagedir_validate(char *pageDirectory) {
     // test if the file can be read
 	if ((fp = fopen(filename, "r")) != NULL) {
         fclose(fp);
+        free(filename);
+        return true;
 	}
 	else { // directory doesn't exist or cannot be read
-        fclose(fp);
 		fprintf(stderr, "%s is not a crawler output directory or cannot be read\n", pageDirectory);
         free(filename);
         return false;
 	}
-    free(filename);
-    return true;
 }
 
 // loads a page from the crawler-produced directory
