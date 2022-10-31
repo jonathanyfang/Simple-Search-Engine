@@ -23,6 +23,9 @@ typedef struct index index_t;
 /* creates a new, empty index */
 index_t *index_new(int ht_size);
 
+/* given an index and a word, returns the counters linked to the word */
+counters_t *index_find(index_t *index, char *word);
+
 /* given an index, a word, and a docID, inserts the word into the index */
 bool index_insert(index_t *index, const char* word, const int docID);
 

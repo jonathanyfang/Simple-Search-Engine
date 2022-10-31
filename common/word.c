@@ -71,7 +71,7 @@ bool validateQuery(char* tokenArr[], int len) {
         return false;
     }
     else if (isOperator(tokenArr[len-1])) {
-        fprintf(stderr, "Error: '%s' cannot be first\n", tokenArr[len-1]);
+        fprintf(stderr, "Error: '%s' cannot be last\n", tokenArr[len-1]);
         return false;
     }
     // Check for adjacent operators

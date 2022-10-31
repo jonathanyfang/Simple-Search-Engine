@@ -1,0 +1,169 @@
+ml () {  module ml "$@"
+}
+module () {  _module_raw "$@" 2>&1
+}
+_module_raw () {  eval `/usr/bin/tclsh8.6 /usr/lib/x86_64-linux-gnu/modulecmd.tcl bash "$@"`;
+ _mlstatus=$?;
+ return $_mlstatus
+}
+# Testing script for querier.c
+#
+# usage: bash -v testing.sh
+#
+# Jonathan Fang
+# CS50, Fall 2022
+
+if [ ! -z "$1" ]; then
+  if [ $1 == "VG" ]; then
+    VALGRIND="valgrind --leak-check=full --show-leak-kinds=all" 
+    echo The following tests will check for memory leaks.
+  fi 
+else
+  VALGRIND=""
+  echo The following tests will run without checking for memory leaks.
+fi
+The following tests will run without checking for memory leaks.
+
+givenDir="/thayerfs/courses/22fall/cosc050/workspace/tse/tse-output"
+
+# Test case 1
+pageDirectory1="${givenDir}/toscrape-depth-1"
+indexFilename1="${givenDir}/toscrape-index-1"
+
+# Test case 2
+pageDirectory2="${givenDir}/letters-depth-1"
+indexFilename2="${givenDir}/letters-index-1"
+
+######################################
+### These tests should pass ####
+### If nothing prints, no errors
+
+### Run querier on toscrape depth 1. These will all be invalid queries
+touch invalid_queries
+echo "These will be invalid queries; none should match" >> invalid_queries
+echo "  " >> invalid_queries
+echo "" >> invalid_queries
+echo "This should fail because I have 1 numerical digit" >> invalid_queries
+echo "And this one has a starting operator" >> invalid_queries
+echo "This one does to or" >> invalid_queries
+echo "This one has and and or next to each other" >> invalid_queries
+$VALGRIND ./querier $pageDirectory1 $indexFilename1 < invalid_queries
+Error: bad character ';' in query
+Error: bad character '1' in query
+Error: 'and' cannot be first
+Error: 'or' cannot be last
+Error: 'and' and 'and' cannot be adjacent
+rm -f invalid_queries
+
+### Run querier on toscrape depth 1. These should match the given outputs
+touch queries
+echo "Europe travel" >> queries
+echo "Europe and travel" >> queries
+echo "Europe or travel" >> queries
+echo "exit" >> queries
+$VALGRIND ./querier $pageDirectory2 $indexFilename2 < queries
+Query:  europe travel
+No documents match.
+-----------------------------------------------
+Query:  europe and travel
+No documents match.
+-----------------------------------------------
+Query:  europe or travel
+No documents match.
+-----------------------------------------------
+Query:  exit
+No documents match.
+-----------------------------------------------
+rm -f queries
+
+### Fuzzy testing
+./fuzzquery /thayerfs/courses/22fall/cosc050/workspace/tse/tse-output/letters-index-1 20 1 | ./querier $pageDirectory2 $indexFilename2
+./fuzzquery: generating 20 queries from 8 words
+Query:  page and algorithm
+No documents match.
+-----------------------------------------------
+Query:  page or home home or this home
+Matches 2 documents (ranked):
+score   4 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score   1 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  for tse or algorithm
+Matches 2 documents (ranked):
+score   1 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score   1 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  endlessly algorithm home or for or curdled or the
+Matches 2 documents (ranked):
+score   2 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score   1 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  for or the tse page and the or page
+Matches 2 documents (ranked):
+score   3 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score   1 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  page algorithm tse the or algorithm
+Matches 1 documents (ranked):
+score   1 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  this
+Matches 1 documents (ranked):
+score   1 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  home algorithm or the
+Matches 2 documents (ranked):
+score   1 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score   1 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  the
+Matches 1 documents (ranked):
+score   1 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  tse or this or home and tse and the
+Matches 1 documents (ranked):
+score   3 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  airfare page home
+No documents match.
+-----------------------------------------------
+Query:  algorithm and home for or playground this
+Matches 2 documents (ranked):
+score   1 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score   1 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  undershirts and playground for and jam unintentionally or the
+Matches 1 documents (ranked):
+score   1 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  hesitantly or page playground page the or the
+Matches 1 documents (ranked):
+score   2 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  playground or home playground or for or algorithm
+Matches 2 documents (ranked):
+score   3 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score   2 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  this
+Matches 1 documents (ranked):
+score   1 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  for or this
+Matches 2 documents (ranked):
+score   2 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score   1 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  home or playground and home
+Matches 2 documents (ranked):
+score   3 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+score   1 doc   2: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  tse or stats or page and dukes or tse home
+Matches 1 documents (ranked):
+score   2 doc   1: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+-----------------------------------------------
+Query:  the mortaring for playground reactivates
+No documents match.
+-----------------------------------------------
+
+### etc.

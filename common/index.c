@@ -44,6 +44,12 @@ index_t *index_new(int ht_size) {
     }
 }
 
+/**************** index_find() ****************/
+/* given an index and a word, returns the counters linked to the word */
+counters_t *index_find(index_t *index, char *word) {
+  return hashtable_find(index->ht, word); 
+}
+
 /**************** index_insert() ****************/
 /* given a word and a docID, inserts the word into the index */
 bool index_insert(index_t *index, const char* word, const int docID) {
